@@ -14,8 +14,8 @@ To see the PageSpeed score [click here](https://developers.google.com/speed/page
 5. Loaded Google Fonts via JS instead of HTML link tag.
 
 ###Optimizations to views/main.js
-##Reducing Resize Pizza functionality to less than 5ms.
+####Reducing Resize Pizza functionality to less than 5ms.
 1. Caching the pizza container divs and the total number of these divs. This was done by moving the call to `document.querySelectorAll(".randomPizzaContainer");` out of the `for` loop, therefore the DOM tree was traversed once an not for each iteration of the for loop.
 2. Caching the new width of the pizza container divs. All the `.randomPizzaContainer` elements have the same layout width, this width is `33.33%` and is defined in the `pizzaElementGenerator` function. Therefore the new layout width for all the elements will also be the same. Hence the call to the `determineDx` function can also be moved out the `for` loop.
 
-##Obtained framerate of 60fps
+####Obtained framerate of 60fps
