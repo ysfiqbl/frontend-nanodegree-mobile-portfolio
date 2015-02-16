@@ -19,3 +19,8 @@ To see the PageSpeed score [click here](https://developers.google.com/speed/page
 2. Caching the new width of the pizza container divs. All the `.randomPizzaContainer` elements have the same layout width, this width is `33.33%` and is defined in the `pizzaElementGenerator` function. Therefore the new layout width for all the elements will also be the same. Hence the call to the `determineDx` function can also be moved out the `for` loop.
 
 ####Obtained framerate of 60fps
+1. Replaced querySelector and querySelectorAll function calls by getElementById and getElementsByClassName functions.
+2. Cached moving pizza elements in a global variable so it does not need to be fetched everytime a scroll executes the updatePositions function.
+3. Uses transform style property instead of left style property for animations.
+4. Decoupled scroll event from animation, see line 520.
+5. Calculates phase outside the for loop. The i%5 values in the for loop had a pattern. They values were a repeating series of 0, 1, 2, 3 and 4. Therefore the phase calculation could be extracted outside the loop. Also document.body.scrollTop is unique for each scroll event and therefore it was also extracted outside the for loop.
