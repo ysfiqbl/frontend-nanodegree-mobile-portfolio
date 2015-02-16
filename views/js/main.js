@@ -508,9 +508,12 @@ function logAverageFrame(times) {   // times is the array of User Timing measure
   console.log("Average time to generate last 10 frames: " + sum / 10 + "ms");
 }
 
-
+/**
+ * Implementing the debounce scroll events as described in
+ * http://www.html5rocks.com/en/tutorials/speed/animations/
+ * @type {Number}
+ */
 var latestKnownScrollTop = 0, ticking = false;
-
 var onScroll = function() {
   latestKnownScrollTop = document.body.scrollTop;
   requestTick();
@@ -522,21 +525,29 @@ var requestTick = function() {
   }
   ticking = true;
 }
+
+
 // The following code for sliding background pizzas was pulled from Ilya's demo found at:
 // https://www.igvita.com/slides/2012/devtools-tips-and-tricks/jank-demo.html
 
+/**
+ * Optizations:
+ * 1. Uses transform style property instead of left style property for animations.
+ * 2. Decoupled scroll event from animation, see line 512.
+ * 3. Moved variable declarations outside the for loop.
+ * @return {[type]} [description]
+ */
 // Moves the sliding background pizzas based on scroll position
 function updatePositions() {
   frame++;
   window.performance.mark("mark_start_frame");
   ticking = false;
-  currentScrollTop = latestKnownScrollTop;
+  var x = latestKnownScrollTop / 1250;
   var items = document.querySelectorAll('.mover');
   for (var i = 0; i < items.length; i++) {
-    var phase = Math.sin((currentScrollTop / 1250) + (i % 5));
-    items[i].style.left = items[i].basicLeft + 100 * phase + 'px';
+    var phase = Math.sin(x + (i % 5));
+    items[i].style.transform = "translateX(" + (100*phase) + "px)";
   }
-
   // User Timing API to the rescue again. Seriously, it's worth learning.
   // Super easy to create custom metrics.
   window.performance.mark("mark_end_frame");
@@ -547,22 +558,26 @@ function updatePositions() {
   }
 }
 
-// runs updatePositions on scroll
+// runs onScroll function on scroll
 window.addEventListener('scroll', onScroll);
 
 // Generates the sliding pizzas when the page loads.
 document.addEventListener('DOMContentLoaded', function() {
   var cols = 8;
   var s = 256;
+  // Caching the node by moving the variable declaration outside the loop
+  var movingPizzas1Div = document.querySelector("#movingPizzas1");
   for (var i = 0; i < 200; i++) {
     var elem = document.createElement('img');
     elem.className = 'mover';
     elem.src = "images/pizza.png";
     elem.style.height = "100px";
     elem.style.width = "73.333px";
-    elem.basicLeft = (i % cols) * s;
+    // Initialize left positions of moving pizzas since transform is used for animation
+    // instead of left
+    elem.style.left = (i % cols) * s + "px";
     elem.style.top = (Math.floor(i / cols) * s) + 'px';
-    document.querySelector("#movingPizzas1").appendChild(elem);
+    movingPizzas1Div.appendChild(elem);
   }
   onScroll();
 });
