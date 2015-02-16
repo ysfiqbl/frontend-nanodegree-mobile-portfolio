@@ -511,13 +511,8 @@ function logAverageFrame(times) {   // times is the array of User Timing measure
 /**
  * Implementing the debounce scroll events as described in
  * http://www.html5rocks.com/en/tutorials/speed/animations/
- * @type {Number}
  */
-var latestKnownScrollTop = 0, ticking = false;
-var onScroll = function() {
-  latestKnownScrollTop = document.body.scrollTop;
-  requestTick();
-}
+var ticking = false;
 
 var requestTick = function() {
   if (!ticking) {
@@ -541,13 +536,23 @@ var requestTick = function() {
 function updatePositions() {
   frame++;
   window.performance.mark("mark_start_frame");
-  ticking = false;
-  var x = latestKnownScrollTop / 1250;
-  var items = document.querySelectorAll('.mover');
-  for (var i = 0; i < items.length; i++) {
-    var phase = Math.sin(x + (i % 5));
-    items[i].style.transform = "translateX(" + (100*phase) + "px)";
+  var x = document.body.scrollTop / 1250;
+  var phases =  [
+    100 * Math.sin(x + 0),
+    100 * Math.sin(x + 1),
+    100 * Math.sin(x + 2),
+    100 * Math.sin(x + 3),
+    100 * Math.sin(x + 4)
+  ];
+  var items = window.items;
+  var itemsLength = window.items.length;
+  var j = 0;
+  for (var i = 0; i < itemsLength; i++) {
+    items[i].style.transform = "translateX(" + phases[j] + "px)";
+    j++;
+    j = (j > 4) ? 0 : j;
   }
+
   // User Timing API to the rescue again. Seriously, it's worth learning.
   // Super easy to create custom metrics.
   window.performance.mark("mark_end_frame");
@@ -556,22 +561,36 @@ function updatePositions() {
     var timesToUpdatePosition = window.performance.getEntriesByName("measure_frame_duration");
     logAverageFrame(timesToUpdatePosition);
   }
+  ticking = false;
 }
 
-// runs onScroll function on scroll
-window.addEventListener('scroll', onScroll);
-
-// Generates the sliding pizzas when the page loads.
-document.addEventListener('DOMContentLoaded', function() {
+/**
+ * Abstracted moving pizzas creation and drawing to its own function.
+ */
+function drawMovingPizzas() {
   var cols = 8;
   var s = 256;
-  // Caching the node by moving the variable declaration outside the loop
-  var movingPizzas1Div = document.querySelector("#movingPizzas1");
-  for (var i = 0; i < 200; i++) {
+  var height = 100;
+  // Calculate the height of the screen and create required number of pizzas to animate
+  var rows = Math.floor(window.innerHeight/height) ;
+  var numMovingPizzas = cols * rows;
+
+  // Add movingPizzas1 div via javascript. This is done in order to easily redraw the moving
+  // pizzas when window is resized.
+  var headerDiv = document.getElementById("header");
+  var movingPizzas1Div = document.getElementById("movingPizzas1");
+  if (movingPizzas1Div != null) {
+    headerDiv.removeChild(movingPizzas1Div);
+  }
+  movingPizzas1Div = document.createElement('div');
+  movingPizzas1Div.id = "movingPizzas1";
+  movingPizzas1Div.className = "col-md-6";
+
+  for (var i = 0; i < numMovingPizzas; i++) {
     var elem = document.createElement('img');
     elem.className = 'mover';
     elem.src = "images/pizza.png";
-    elem.style.height = "100px";
+    elem.style.height = height + "px";
     elem.style.width = "73.333px";
     // Initialize left positions of moving pizzas since transform is used for animation
     // instead of left
@@ -579,5 +598,17 @@ document.addEventListener('DOMContentLoaded', function() {
     elem.style.top = (Math.floor(i / cols) * s) + 'px';
     movingPizzas1Div.appendChild(elem);
   }
-  onScroll();
+  document.getElementById("header").appendChild(movingPizzas1Div);
+  window.items = document.getElementsByClassName('mover');
+}
+
+// runs onScroll function on scroll
+window.addEventListener('scroll', requestTick, false);
+
+// Generates the sliding pizzas when the page loads.
+document.addEventListener('DOMContentLoaded', function() {
+  drawMovingPizzas();
+  requestTick();
 });
+
+window.onresize = drawMovingPizzas;
